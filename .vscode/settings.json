@@ -1,0 +1,18 @@
+{
+    "workbench.colorCustomizations": {
+        "[Monokai Dimmed]": {},
+        "statusBar.background": "#303030",
+        "menu.background": "#000000",
+        "activityBar.background": "#000000",
+        "panel.background": "#000000",
+        "minimapSlider.background": "#000000",
+        "selection.background": "#000000",
+        "badge.background": "#000000",
+        "welcomePage.background": "#000000",
+        "sideBar.background": "#000000",
+    "editor.background": "#000000",
+    },
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "prettier.tabWidth": 4
+}
