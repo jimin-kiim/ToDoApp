@@ -4,14 +4,14 @@ import {
     Text,
     View,
     TouchableOpacity,
-    // TouchableHighlight,
-    // TouchableWithoutFeedback,
-    // Pressable,
     TextInput,
     ScrollView,
 } from "react-native";
 import { theme } from "./colors";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import AsnyncStorage from "@react-native-async-storage/async-storage";
+
+const STORAGE_KEY = "@toDos";
 
 export default function App() {
     const [working, setWorking] = useState(true);
@@ -19,28 +19,34 @@ export default function App() {
     const [toDos, setToDos] = useState({});
     const travel = () => setWorking(false);
     const work = () => setWorking(true);
-    const onChangeText = (payload) => {
-        setText(payload);
+    useEffect(() => {
+        loadToDos();
+    }, []);
+
+    const loadToDos = async () => {
+        const s = await AsnyncStorage.getItem(STORAGE_KEY);
+        setToDos(JSON.parse(s)); //string=>Javascript object
     };
-    const addToDo = () => {
+
+    const addToDo = async () => {
         if (text == "") {
             return;
         }
-        // const newToDos = Object.assign({}, toDos, {
-        //     [Date.now()]: { text, work: working },
-        // });
-        // Object.assign() : combining exisiting object and a new one.
-        //{}: the new one would be an object
-        // target, existing objects, new one.
-        // [key]:{contents}
         const newToDos = {
             ...toDos,
-            // getting the contents of the object
-            [Date.now()]: { text, work: working },
+            [Date.now()]: { text, working },
         };
         setToDos(newToDos);
+        await saveToDos(newToDos);
         setText("");
     };
+
+    const onChangeText = (payload) => setText(payload);
+
+    const saveToDos = async (toSave) => {
+        await AsnyncStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    };
+
     return (
         <View style={styles.container}>
             <StatusBar style="auto" />
@@ -78,11 +84,17 @@ export default function App() {
                 style={styles.input}
             ></TextInput>
             <ScrollView>
-                {Object.keys(toDos).map((key) => (
-                    <View style={styles.toDo} key={key}>
-                        <Text style={styles.toDoText}>{toDos[key].text}</Text>
-                    </View>
-                ))}
+                {toDos !== null
+                    ? Object.keys(toDos).map((key) =>
+                          toDos[key].working === working ? (
+                              <View style={styles.toDo} key={key}>
+                                  <Text style={styles.toDoText}>
+                                      {toDos[key].text}
+                                  </Text>
+                              </View>
+                          ) : null
+                      )
+                    : null}
             </ScrollView>
         </View>
     );
