@@ -45,6 +45,15 @@ export default function App() {
                     </Text>
                 </TouchableOpacity>
             </View>
+
+            <TextInput
+                onChangeText={onChangeText}
+                value={text}
+                placeholder={
+                    working ? "Add a To Do" : "Where do you want to go?"
+                }
+                style={styles.input}
+            ></TextInput>
         </View>
     );
 }
@@ -63,5 +72,13 @@ const styles = StyleSheet.create({
     btnText: {
         fontSize: 45,
         fontWeight: "600",
+    },
+    input: {
+        backgroundColor: "white",
+        paddingVertical: 15,
+        paddingHorizontal: 20,
+        borderRadius: 30,
+        marginTop: 20,
+        fontSize: 18,
     },
 });
