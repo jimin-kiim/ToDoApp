@@ -6,10 +6,12 @@ import {
     TouchableOpacity,
     TextInput,
     ScrollView,
+    Alert,
 } from "react-native";
 import { theme } from "./colors";
 import React, { useEffect, useState } from "react";
 import AsnyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
 
 const STORAGE_KEY = "@toDos";
 
@@ -17,6 +19,7 @@ export default function App() {
     const [working, setWorking] = useState(true);
     const [text, setText] = useState("");
     const [toDos, setToDos] = useState({});
+    const [loading, setLoading] = useState(true);
     const travel = () => setWorking(false);
     const work = () => setWorking(true);
     useEffect(() => {
@@ -26,6 +29,7 @@ export default function App() {
     const loadToDos = async () => {
         const s = await AsnyncStorage.getItem(STORAGE_KEY);
         setToDos(JSON.parse(s)); //string=>Javascript object
+        setLoading(false);
     };
 
     const addToDo = async () => {
@@ -43,10 +47,24 @@ export default function App() {
 
     const onChangeText = (payload) => setText(payload);
 
+    const deleteToDo = (id) => {
+        Alert.alert("Delete To Do", "Are you sure?", [
+            { text: "Cancel" },
+            {
+                text: "I'm sure",
+                style: "destructive",
+                onPress: () => {
+                    const newToDos = { ...toDos };
+                    delete newToDos[id];
+                    setToDos(newToDos);
+                    saveToDos(newToDos);
+                },
+            },
+        ]);
+    };
     const saveToDos = async (toSave) => {
         await AsnyncStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
     };
-
     return (
         <View style={styles.container}>
             <StatusBar style="auto" />
@@ -84,17 +102,30 @@ export default function App() {
                 style={styles.input}
             ></TextInput>
             <ScrollView>
-                {toDos !== null
-                    ? Object.keys(toDos).map((key) =>
-                          toDos[key].working === working ? (
-                              <View style={styles.toDo} key={key}>
-                                  <Text style={styles.toDoText}>
-                                      {toDos[key].text}
-                                  </Text>
-                              </View>
-                          ) : null
-                      )
-                    : null}
+                {toDos !== null ? (
+                    loading === true ? (
+                        <Text>Loading...</Text>
+                    ) : (
+                        Object.keys(toDos).map((key) =>
+                            toDos[key].working === working ? (
+                                <View style={styles.toDo} key={key}>
+                                    <Text style={styles.toDoText}>
+                                        {toDos[key].text}
+                                    </Text>
+                                    <TouchableOpacity
+                                        onPress={() => deleteToDo(key)}
+                                    >
+                                        <Ionicons
+                                            name="ios-trash-outline"
+                                            size={17}
+                                            color={theme.grey}
+                                        />
+                                    </TouchableOpacity>
+                                </View>
+                            ) : null
+                        )
+                    )
+                ) : null}
             </ScrollView>
         </View>
     );
@@ -124,11 +155,14 @@ const styles = StyleSheet.create({
         fontSize: 18,
     },
     toDo: {
-        backgroundColor: theme.grey,
+        backgroundColor: theme.toDoBg,
         marginBottom: 10,
         paddingVertical: 20,
         paddingHorizontal: 20,
         borderRadius: 15,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
     },
     toDoText: {
         color: "white",
