@@ -12,7 +12,7 @@ import {
 import { theme } from "./colors";
 import React, { useEffect, useState } from "react";
 import AsnyncStorage from "@react-native-async-storage/async-storage";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
 const STORAGE_KEY = "@toDos";
 const WORKING_STATE = "@state";
@@ -49,7 +49,7 @@ export default function App() {
         }
         const newToDos = {
             ...toDos,
-            [Date.now()]: { text, working },
+            [Date.now()]: { text, working, done: "false" },
         };
         setToDos(newToDos);
         await saveToDos(newToDos);
@@ -57,6 +57,13 @@ export default function App() {
     };
 
     const onChangeText = (payload) => setText(payload);
+    const flipTodoState = (id) => {
+        const newToDos = { ...toDos };
+        var currentState = newToDos[id].done;
+        newToDos[id].done = currentState === "true" ? "false" : "true";
+        setToDos(newToDos);
+        saveToDos(newToDos);
+    };
 
     const deleteToDo = (id) => {
         Alert.alert("Delete To Do", "Are you sure?", [
@@ -73,9 +80,11 @@ export default function App() {
             },
         ]);
     };
+
     const saveToDos = async (toSave) => {
         await AsnyncStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
     };
+
     return (
         <View style={styles.container}>
             <StatusBar style="auto" />
@@ -120,9 +129,36 @@ export default function App() {
                         Object.keys(toDos).map((key) =>
                             toDos[key].working === working ? (
                                 <View style={styles.toDo} key={key}>
-                                    <Text style={styles.toDoText}>
-                                        {toDos[key].text}
-                                    </Text>
+                                    <View
+                                        style={{
+                                            flexDirection: "row",
+                                            alignItems: "center",
+                                        }}
+                                    >
+                                        <TouchableOpacity
+                                            onPress={() => flipTodoState(key)}
+                                        >
+                                            <MaterialCommunityIcons
+                                                name={
+                                                    toDos[key].done === "true"
+                                                        ? "checkbox-intermediate"
+                                                        : "checkbox-blank-outline"
+                                                }
+                                                size={24}
+                                                color="white"
+                                            />
+                                        </TouchableOpacity>
+                                        <Text
+                                            style={[
+                                                styles.toDoText,
+                                                toDos[key].done === "true"
+                                                    ? styles.doneTodoText
+                                                    : null,
+                                            ]}
+                                        >
+                                            {toDos[key].text}
+                                        </Text>
+                                    </View>
                                     <TouchableOpacity
                                         onPress={() => deleteToDo(key)}
                                     >
@@ -179,5 +215,10 @@ const styles = StyleSheet.create({
         color: "white",
         fontSize: 16,
         fontWeight: "500",
+        paddingLeft: 20,
+    },
+    doneToDoText: {
+        textDecorationLine: "line-through",
+        color: theme.grey,
     },
 });
