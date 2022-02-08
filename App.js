@@ -7,6 +7,7 @@ import {
     TextInput,
     ScrollView,
     Alert,
+    AsyncStorage,
 } from "react-native";
 import { theme } from "./colors";
 import React, { useEffect, useState } from "react";
@@ -14,22 +15,32 @@ import AsnyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 
 const STORAGE_KEY = "@toDos";
+const WORKING_STATE = "@state";
 
 export default function App() {
     const [working, setWorking] = useState(true);
     const [text, setText] = useState("");
     const [toDos, setToDos] = useState({});
     const [loading, setLoading] = useState(true);
-    const travel = () => setWorking(false);
-    const work = () => setWorking(true);
+    const travel = () => {
+        setWorking(false);
+        AsnyncStorage.setItem(WORKING_STATE, "false");
+    };
+    const work = () => {
+        setWorking(true);
+        AsnyncStorage.setItem(WORKING_STATE, "true");
+    };
     useEffect(() => {
         loadToDos();
     }, []);
 
     const loadToDos = async () => {
         const s = await AsnyncStorage.getItem(STORAGE_KEY);
+        //similar to the local Storage, but it's only for mobile, and handles unencrypted string.
         setToDos(JSON.parse(s)); //string=>Javascript object
         setLoading(false);
+        const state = await AsnyncStorage.getItem(WORKING_STATE);
+        setWorking(JSON.parse(state));
     };
 
     const addToDo = async () => {
