@@ -193,7 +193,7 @@ export default function App() {
                                                 style={[
                                                     styles.toDoText,
                                                     toDos[key].done === "true"
-                                                        ? styles.doneTodoText
+                                                        ? styles.doneToDoText
                                                         : null,
                                                 ]}
                                             >
@@ -269,6 +269,7 @@ const styles = StyleSheet.create({
         paddingLeft: 20,
     },
     doneToDoText: {
+        textDecorationStyle: "solid",
         textDecorationLine: "line-through",
         color: theme.grey,
     },
