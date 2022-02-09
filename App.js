@@ -13,7 +13,7 @@ import {
 import { theme } from "./colors";
 import React, { useEffect, useState } from "react";
 import AsnyncStorage from "@react-native-async-storage/async-storage";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 
 const STORAGE_KEY = "@toDos";
 const WORKING_STATE = "@state";
@@ -23,6 +23,7 @@ export default function App() {
     const [text, setText] = useState("");
     const [toDos, setToDos] = useState({});
     const [loading, setLoading] = useState(true);
+    const [editText, setEditText] = useState("");
     const travel = () => {
         setWorking(false);
         AsnyncStorage.setItem(WORKING_STATE, "false");
@@ -37,33 +38,54 @@ export default function App() {
 
     const loadToDos = async () => {
         const s = await AsnyncStorage.getItem(STORAGE_KEY);
-        //similar to the local Storage, but it's only for mobile, and handles unencrypted string.
-        setToDos(JSON.parse(s)); //string=>Javascript object
+        setToDos(JSON.parse(s));
         setLoading(false);
         const state = await AsnyncStorage.getItem(WORKING_STATE);
         setWorking(JSON.parse(state));
     };
 
-    const addToDo = async () => {
+    const addToDo = () => {
         if (text == "") {
             return;
         }
         const newToDos = {
             ...toDos,
-            [Date.now()]: { text, working, done: "false" },
+            [Date.now()]: { text, working, done: "false", editing: "false" },
         };
         setToDos(newToDos);
-        await saveToDos(newToDos);
+        saveToDos(newToDos);
         setText("");
     };
 
     const onChangeText = (payload) => setText(payload);
+
     const flipTodoState = (id) => {
         const newToDos = { ...toDos };
         var currentState = newToDos[id].done;
         newToDos[id].done = currentState === "true" ? "false" : "true";
         setToDos(newToDos);
         saveToDos(newToDos);
+    };
+
+    const editToDo = (id) => {
+        const newToDos = { ...toDos };
+        newToDos[id].editing = "true";
+        setToDos(newToDos);
+        saveToDos(newToDos);
+        setEditText(newToDos[id].text);
+    };
+
+    const submitEditToDo = (id) => {
+        const newToDos = { ...toDos };
+        newToDos[id].text = editText;
+        newToDos[id].editing = "false";
+        setToDos(newToDos);
+        saveToDos(newToDos);
+        setEditText("");
+    };
+
+    const onChangeEditText = (payload) => {
+        setEditText(payload);
     };
 
     const deleteToDo = (id) => {
@@ -142,12 +164,7 @@ export default function App() {
                         Object.keys(toDos).map((key) =>
                             toDos[key].working === working ? (
                                 <View style={styles.toDo} key={key}>
-                                    <View
-                                        style={{
-                                            flexDirection: "row",
-                                            alignItems: "center",
-                                        }}
-                                    >
+                                    <View style={styles.wrapper}>
                                         <TouchableOpacity
                                             onPress={() => flipTodoState(key)}
                                         >
@@ -161,26 +178,50 @@ export default function App() {
                                                 color="white"
                                             />
                                         </TouchableOpacity>
-                                        <Text
-                                            style={[
-                                                styles.toDoText,
-                                                toDos[key].done === "true"
-                                                    ? styles.doneTodoText
-                                                    : null,
-                                            ]}
-                                        >
-                                            {toDos[key].text}
-                                        </Text>
+                                        {toDos[key].editing === "true" ? (
+                                            <TextInput
+                                                returnKeyType="done"
+                                                onSubmitEditing={() =>
+                                                    submitEditToDo(key)
+                                                }
+                                                onChangeText={onChangeEditText}
+                                                value={editText}
+                                                style={styles.editingInput}
+                                            ></TextInput>
+                                        ) : (
+                                            <Text
+                                                style={[
+                                                    styles.toDoText,
+                                                    toDos[key].done === "true"
+                                                        ? styles.doneTodoText
+                                                        : null,
+                                                ]}
+                                            >
+                                                {toDos[key].text}
+                                            </Text>
+                                        )}
                                     </View>
-                                    <TouchableOpacity
-                                        onPress={() => deleteToDo(key)}
-                                    >
-                                        <Ionicons
-                                            name="ios-trash-outline"
-                                            size={17}
-                                            color={theme.grey}
-                                        />
-                                    </TouchableOpacity>
+                                    <View style={styles.wrapper}>
+                                        <TouchableOpacity
+                                            onPress={() => editToDo(key)}
+                                        >
+                                            <Feather
+                                                name="edit-3"
+                                                size={17}
+                                                color={theme.grey}
+                                                style={{ paddingRight: 7 }}
+                                            />
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            onPress={() => deleteToDo(key)}
+                                        >
+                                            <Ionicons
+                                                name="ios-trash-outline"
+                                                size={17}
+                                                color={theme.grey}
+                                            />
+                                        </TouchableOpacity>
+                                    </View>
                                 </View>
                             ) : null
                         )
@@ -230,5 +271,17 @@ const styles = StyleSheet.create({
     doneToDoText: {
         textDecorationLine: "line-through",
         color: theme.grey,
+    },
+    wrapper: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    editingInput: {
+        color: "white",
+        fontSize: 16,
+        fontWeight: "300",
+        marginLeft: 20,
+        borderBottomColor: theme.grey,
+        borderBottomWidth: 2,
     },
 });
